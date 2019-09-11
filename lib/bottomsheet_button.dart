@@ -2,56 +2,55 @@ library bottomsheet_button;
 
 import 'package:flutter/material.dart';
 import 'hifive_divider.dart';
-enum RadiusDirection { bottom, top, all, none }
 
 class BottomSheetButtonGroup extends StatelessWidget {
-  BottomSheetButtonGroup({this.children, this.sliceIndex = 0})
-      : assert(sliceIndex >= 0 && sliceIndex < children.length);
-  final List<BottomSheetButton> children;
-  ///分隔的index
-  ///用于分隔按钮组的
-  final int sliceIndex;
+  BottomSheetButtonGroup({
+    this.children,
+    this.sliceIndex = const [],
+    this.margin,
+  });
+  final List<Widget> children;
+  final EdgeInsetsGeometry margin;
+
+  ///用于分隔按钮组的index,可以分割多组
+  final List<int> sliceIndex;
 
   List<Widget> get _children {
     List<Widget> _list = [];
-    RadiusDirection _direction;
     for (int i = 0; i < children.length; i++) {
-      BottomSheetButton _button = children[i];
+      Widget _button = children[i];
+      bool topRadius = false;
+      bool bottomRadius = false;
       if (i > 0)
-        _list.add(i == sliceIndex ? SizedBox(height: 8) : HiFiveDivider());
-
-      if (i < sliceIndex)
-        _direction = i == 0
-            ? RadiusDirection.top
-            : i == sliceIndex - 1
-            ? RadiusDirection.bottom
-            : RadiusDirection.none;
-
-      if (i >= sliceIndex)
-        _direction = i == sliceIndex
-            ? RadiusDirection.top
-            : i == children.length - 1
-            ? RadiusDirection.bottom
-            : RadiusDirection.none;
-      if ((i == 0 && sliceIndex - 1 == 0) ||
-          (i == children.length - 1 && sliceIndex == children.length - 1))
-        _direction = RadiusDirection.all;
-      _list.add(BottomSheetButton(
-        onTap: _button.onTap,
-        text: _button.text,
-        textColor: _button.textColor,
-        radius: _button.radius,
-        radiusDirection: _direction,
-      ));
+        _list.add(
+            sliceIndex.contains(i) ? SizedBox(height: 8) : HiFiveDivider());
+      if (i == 0 || sliceIndex.contains(i)) topRadius = true;
+      if (i == children.length - 1 || sliceIndex.contains(i + 1))
+        bottomRadius = true;
+      if (_button is BottomSheetButton) {
+        _list.add(BottomSheetButton(
+          onTap: _button.onTap,
+          text: _button.text,
+          textColor: _button.textColor,
+          radius: _button.radius,
+          topRadius: _button.topRadius ?? topRadius,
+          bottomRadius: _button.bottomRadius ?? bottomRadius,
+        ));
+      } else {
+        _list.add(_button);
+      }
     }
     return _list;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: _children,
+    return Padding(
+      padding: margin ?? const EdgeInsets.all(0.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: _children,
+      ),
     );
   }
 }
@@ -61,30 +60,17 @@ class BottomSheetButton extends StatelessWidget {
     this.onTap,
     this.text,
     this.textColor = Colors.black,
-    this.radiusDirection = RadiusDirection.all,
     this.radius = 10,
+    this.topRadius,
+    this.bottomRadius,
   });
   final VoidCallback onTap;
   final String text;
   final Color textColor;
-
-  ///圆角方向
-  final RadiusDirection radiusDirection;
+  final bool topRadius;
+  final bool bottomRadius;
 
   final double radius;
-
-  BorderRadius get _borderRadius {
-    switch (radiusDirection) {
-      case RadiusDirection.all:
-        return BorderRadius.circular(radius);
-      case RadiusDirection.bottom:
-        return BorderRadius.vertical(bottom: Radius.circular(radius));
-      case RadiusDirection.top:
-        return BorderRadius.vertical(top: Radius.circular(radius));
-      default:
-        return BorderRadius.circular(0);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,8 +79,11 @@ class BottomSheetButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         constraints: BoxConstraints(minHeight: 52),
-        decoration:
-        BoxDecoration(color: Colors.white, borderRadius: _borderRadius),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(
+                top: Radius.circular(topRadius ? radius : 0),
+                bottom: Radius.circular(bottomRadius ? radius : 0))),
         child: Center(
           child: Text(
             text ?? "",
