@@ -1,7 +1,7 @@
 # bottomsheet_button
 
 A new Flutter package.
-<div align=center>
+<div align=left>
 <img src="https://github.com/flutter-studio/bottomsheet_button/blob/master/Screenshot_1568185662.png" width = "280" alt="图片名称" align=center />
 </div>
 
